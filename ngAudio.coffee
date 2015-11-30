@@ -6,6 +6,6 @@ angular.module('util.audio', [])
 		
 		$sceDelegateProvider.resourceUrlWhitelist ['self', 'https://mob.myvnc.com/**', 'filesystem:**']
 		
-	.factory 'audioService', ($cordovaDevice) ->
+	.factory 'audioService', ->
 	
 		require './audio'

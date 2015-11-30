@@ -42,12 +42,15 @@ class Recorder
 
 class Player
 
+	track: {}
+	
 	start: (url) ->
-		@audio = new Wad source: url
-		@audio.play()
+		if not @track[url]
+			@track[url] = new Wad source: url, env : { hold : 400 }
+		@track[url].play()
 		
-	stop: ->
-		@audio.stop()
+	stop: (url) ->
+		@track[url].stop()
 	 
 module.exports = 
 	beep:		beep

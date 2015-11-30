@@ -3,7 +3,10 @@
 	<head>
 		<script type="text/javascript" src="./index.js"></script>
 	</head>
-	<body>
+	<body ng-controller='AudioController'>
 		<audio controls src='http://hpr.dogphilosophy.net/test/mp3.mp3' type='audio/mpeg'></audio>
+		<label>Audio URL</label><input type='text' ng-model='url'>
+		<button ng-click="player.start(url)">play</button>
+		<button ng-click="player.stop(url)">stop</button>
 	</body>
 </html>

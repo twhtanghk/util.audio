@@ -70,15 +70,22 @@ Recorder = (function() {
 Player = (function() {
   function Player() {}
 
+  Player.prototype.track = {};
+
   Player.prototype.start = function(url) {
-    this.audio = new Wad({
-      source: url
-    });
-    return this.audio.play();
+    if (!this.track[url]) {
+      this.track[url] = new Wad({
+        source: url,
+        env: {
+          hold: 400
+        }
+      });
+    }
+    return this.track[url].play();
   };
 
-  Player.prototype.stop = function() {
-    return this.audio.stop();
+  Player.prototype.stop = function(url) {
+    return this.track[url].stop();
   };
 
   return Player;

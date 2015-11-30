@@ -19,6 +19,7 @@
   ],
   "devDependencies": {
     "Wad": "wad#~2.3.0",
-    "angular": "~1.4.8"
+    "angular": "~1.4.8",
+    "lodash": "~3.10.1"
   }
 }
