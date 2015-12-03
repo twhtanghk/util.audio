@@ -18,7 +18,7 @@ gulp.task 'sass', (done) ->
     .pipe(gulp.dest('./test/'))
 
 gulp.task 'coffee', ->
-	gulp.src('./*.coffee')
+	gulp.src('./index.coffee')
 	  	.pipe(coffee({bare: true}).on('error', gutil.log))
 	    .pipe(gulp.dest('./'))
 
