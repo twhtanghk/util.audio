@@ -1,7 +1,10 @@
 {
   "name": "util.audio",
   "description": "audio player and recorder for browser",
-  "main": "ngAudio.js",
+  "main": [
+  	"index.js",
+  	"index.css"
+  ],
   "authors": [
     "Tommy Tang <twhtanghk@gmail.com>"
   ],
@@ -20,6 +23,8 @@
   "devDependencies": {
     "Wad": "wad#~2.3.0",
     "angular": "~1.4.8",
-    "lodash": "~3.10.1"
+    "lodash": "~3.10.1",
+    "ionic": "~1.1.1",
+    "numeral": "~1.5.3"
   }
 }

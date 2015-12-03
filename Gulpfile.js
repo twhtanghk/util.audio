@@ -1,4 +1,4 @@
-var browserify, coffee, gulp, gutil, source;
+var browserify, coffee, gulp, gutil, minifyCss, rename, sass, source;
 
 gulp = require('gulp');
 
@@ -10,7 +10,18 @@ coffee = require('gulp-coffee');
 
 gutil = require('gulp-util');
 
+sass = require('gulp-sass');
+
+minifyCss = require('gulp-minify-css');
+
+rename = require('gulp-rename');
+
 gulp.task('default', ['test']);
+
+gulp.task('sass', function(done) {
+  gulp.src('./*.scss').pipe(sass()).pipe(gulp.dest('./'));
+  return gulp.src('./test/*.scss').pipe(sass()).pipe(gulp.dest('./test/'));
+});
 
 gulp.task('coffee', function() {
   return gulp.src('./*.coffee').pipe(coffee({
@@ -18,7 +29,7 @@ gulp.task('coffee', function() {
   }).on('error', gutil.log)).pipe(gulp.dest('./'));
 });
 
-gulp.task('test', ['coffee'], function() {
+gulp.task('test', ['coffee', 'sass'], function() {
   return browserify({
     entries: ['./test/index.coffee']
   }).transform('coffeeify').transform('debowerify').bundle().pipe(source('index.js')).pipe(gulp.dest('./test/'));

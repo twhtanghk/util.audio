@@ -2,7 +2,10 @@
   "name": "util.audio",
   "version": "0.0.1",
   "description": "audio player and recorder for browser",
-  "main": "index.js",
+  "main": [
+  	"index.js",
+  	"index.css"
+  ],
   "directories": {
     "test": "test"
   },
@@ -26,7 +29,8 @@
     "debowerify": "^1.2.0",
     "gulp": "^3.8.11",
     "gulp-coffee": "^2.3.1",
-    "gulp-sass": "^1.3.3",
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^2.1.0",
     "gulp-util": "^3.0.4",
     "http-server": "^0.8.5",
     "vinyl-source-stream": "^1.1.0"

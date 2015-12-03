@@ -1,4 +1,4 @@
-require '../ngAudio.js'
+require '../index.js'
 _ = require 'lodash'
 
 angular.module 'app', ['util.audio']
