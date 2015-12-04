@@ -16,7 +16,7 @@ Create audio player by directive
 
 Create audioService.Recorder
 ```
-	require 'util.auth'
+	require 'util.audio'
 	
 	angular.module 'app', ['util.audio']
 		.controller 'AudioController', ($scope, audioService) ->
