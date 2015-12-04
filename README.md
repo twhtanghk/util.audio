@@ -1,5 +1,5 @@
 # util.audio
-util.audio is to provide angular service 'audioService' and directive 'util-audio' with recorder and player for browser with Web Audio API support 
+util.audio is an angular module implemented with angular service 'audioService' and directive 'util-audio' for browser with Web Audio API support 
 
 ## Usage
 Install the required packages
