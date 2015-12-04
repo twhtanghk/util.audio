@@ -1,14 +1,24 @@
 require 'angular'
+require 'angular-animate'
+require 'angular-sanitize'
+require 'angular-ui-router'
+require 'ionic'
 _ = require 'lodash'
 numeral = require 'numeral'
+url = require 'url'
+dateformat = require 'dateformat'
 
-angular.module('util.audio', ['util.audio.template'])
+now = ->
+	ret = new Date()
+	dateformat new Date(), 'yyyymmddHHMMss'
+	
+angular.module('util.audio', ['util.audio.template', 'ionic'])
 	
 	.config ($sceDelegateProvider, $compileProvider) ->
 		
-		$sceDelegateProvider.resourceUrlWhitelist ['self', 'https://mob.myvnc.com/**', 'filesystem:**']
+		$sceDelegateProvider.resourceUrlWhitelist ['self', 'https://mob.myvnc.com/**', 'filesystem:**', 'blob:**']
 		
-	.factory 'audioService', ($http, $interval) ->
+	.factory 'audioService', ($http, $interval, $log) ->
 	
 		Wad = require 'Wad/build/wad.js'
 	
@@ -22,6 +32,8 @@ angular.module('util.audio', ['util.audio.template'])
 		
 		class Recorder
 			
+			recording:	false
+			
 			constructor: ->
 				@media = new Wad.Poly 
 					recConfig: 
@@ -33,18 +45,24 @@ angular.module('util.audio', ['util.audio.template'])
 				
 			start: ->
 				beep 1000, =>
+					@recording = true
 					@media.rec.clear()
 					@media.output.disconnect(@media.destination)
 					@media.rec.record()
 					@mic.play()
 				
 			stop: ->
-				beep 500, =>
-					@mic.stop()
-					@media.rec.stop()
-					@media.output.connect(@media.destination)
-				
-			file: (name) ->
+				new Promise (fulfill, reject) =>
+					beep 500, =>
+						@mic.stop()
+						@media.rec.stop()
+						@media.output.connect(@media.destination)
+						@recording = false
+						@file().then (file) =>
+							@url = URL.createObjectURL file
+							fulfill @
+
+			file: (name = "#{now()}.wav") ->
 				new Promise (fulfill, reject) =>
 					@media.rec.exportWAV (blob) ->
 						_.extend blob,
@@ -70,19 +88,24 @@ angular.module('util.audio', ['util.audio.template'])
 				@context = new AudioContext()
 				@gain = @context.createGain()
 				@volume = @gain.gain
+				@fetch().catch $log.error
 				
 			fetch: (opts = {}) ->
+				@url = opts.url || @url
 				new Promise (fulfill, reject) =>
-					$http.get @url, _.defaults(opts, responseType: 'arraybuffer')
-						.then (res) =>
-							@decode(res).then =>
-								@connect()
-								fulfill @
-						.catch reject
+					if @url
+						$http.get @url, _.defaults(opts, responseType: 'arraybuffer')
+							.then (res) =>
+								@decode(res.data).then =>
+									@connect()
+									fulfill @
+							.catch reject
+					else
+						fulfill @
 						
-			decode: (res) ->
+			decode: (data) ->
 				new Promise (fulfill, reject) =>
-					@context.decodeAudioData res.data, (buffer) =>
+					@context.decodeAudioData data, (buffer) =>
 						@buffer = buffer
 						fulfill @
 					
@@ -119,7 +142,9 @@ angular.module('util.audio', ['util.audio.template'])
 				@playing = false
 				return @
 			
-			seek: ->
+			seek: (pos = @offset) ->
+				# input[type=range] value is defined as string type
+				# to be fixed by angular later
 				if typeof @offset == 'string'
 					@offset = parseFloat @offset
 				if @playing
@@ -163,8 +188,12 @@ angular.module('util.audio', ['util.audio.template'])
 		
 		controller: ($scope, audioService) ->
 			player = new audioService.Player($scope.src)
-			player.fetch()
-				.catch $log.error
+			
+			$scope.$watch 'src', (newurl, oldurl) ->
+				if newurl != oldurl
+					player.fetch(url: newurl)
+						.catch $log.error
+				
 			_.extend $scope, 
 				model: player
 				duration: ->

@@ -2,8 +2,8 @@
   "name": "util.audio",
   "description": "audio player and recorder for browser",
   "main": [
-  	"index.js",
-  	"index.css"
+    "index.js",
+    "index.css"
   ],
   "authors": [
     "Tommy Tang <twhtanghk@gmail.com>"
@@ -25,6 +25,9 @@
     "angular": "~1.4.8",
     "lodash": "~3.10.1",
     "ionic": "~1.1.1",
-    "numeral": "~1.5.3"
+    "numeral": "~1.5.3",
+    "angular-animate": "~1.4.8",
+    "angular-sanitize": "~1.4.8",
+    "angular-ui-router": "~0.2.15"
   }
 }

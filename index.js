@@ -1,15 +1,33 @@
-var _, numeral,
+var _, dateformat, now, numeral, url,
   bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
 require('angular');
+
+require('angular-animate');
+
+require('angular-sanitize');
+
+require('angular-ui-router');
+
+require('ionic');
 
 _ = require('lodash');
 
 numeral = require('numeral');
 
-angular.module('util.audio', ['util.audio.template']).config(function($sceDelegateProvider, $compileProvider) {
-  return $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://mob.myvnc.com/**', 'filesystem:**']);
-}).factory('audioService', function($http, $interval) {
+url = require('url');
+
+dateformat = require('dateformat');
+
+now = function() {
+  var ret;
+  ret = new Date();
+  return dateformat(new Date(), 'yyyymmddHHMMss');
+};
+
+angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($sceDelegateProvider, $compileProvider) {
+  return $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://mob.myvnc.com/**', 'filesystem:**', 'blob:**']);
+}).factory('audioService', function($http, $interval, $log) {
   var Player, Recorder, Wad, beep;
   Wad = require('Wad/build/wad.js');
   beep = function(ms, cb) {
@@ -25,6 +43,8 @@ angular.module('util.audio', ['util.audio.template']).config(function($sceDelega
     return _.delay(callback, ms);
   };
   Recorder = (function() {
+    Recorder.prototype.recording = false;
+
     function Recorder() {
       this.media = new Wad.Poly({
         recConfig: {
@@ -40,6 +60,7 @@ angular.module('util.audio', ['util.audio.template']).config(function($sceDelega
     Recorder.prototype.start = function() {
       return beep(1000, (function(_this) {
         return function() {
+          _this.recording = true;
           _this.media.rec.clear();
           _this.media.output.disconnect(_this.media.destination);
           _this.media.rec.record();
@@ -49,16 +70,26 @@ angular.module('util.audio', ['util.audio.template']).config(function($sceDelega
     };
 
     Recorder.prototype.stop = function() {
-      return beep(500, (function(_this) {
-        return function() {
-          _this.mic.stop();
-          _this.media.rec.stop();
-          return _this.media.output.connect(_this.media.destination);
+      return new Promise((function(_this) {
+        return function(fulfill, reject) {
+          return beep(500, function() {
+            _this.mic.stop();
+            _this.media.rec.stop();
+            _this.media.output.connect(_this.media.destination);
+            _this.recording = false;
+            return _this.file().then(function(file) {
+              _this.url = URL.createObjectURL(file);
+              return fulfill(_this);
+            });
+          });
         };
       })(this));
     };
 
     Recorder.prototype.file = function(name) {
+      if (name == null) {
+        name = (now()) + ".wav";
+      }
       return new Promise((function(_this) {
         return function(fulfill, reject) {
           return _this.media.rec.exportWAV(function(blob) {
@@ -88,38 +119,44 @@ angular.module('util.audio', ['util.audio.template']).config(function($sceDelega
 
     Player.prototype.offset = 0;
 
-    function Player(url) {
+    function Player(url1) {
       var AudioContext;
-      this.url = url;
+      this.url = url1;
       this.toggleVol = bind(this.toggleVol, this);
       AudioContext = window.AudioContext || webkitAudioContext;
       this.context = new AudioContext();
       this.gain = this.context.createGain();
       this.volume = this.gain.gain;
+      this.fetch()["catch"]($log.error);
     }
 
     Player.prototype.fetch = function(opts) {
       if (opts == null) {
         opts = {};
       }
+      this.url = opts.url || this.url;
       return new Promise((function(_this) {
         return function(fulfill, reject) {
-          return $http.get(_this.url, _.defaults(opts, {
-            responseType: 'arraybuffer'
-          })).then(function(res) {
-            return _this.decode(res).then(function() {
-              _this.connect();
-              return fulfill(_this);
-            });
-          })["catch"](reject);
+          if (_this.url) {
+            return $http.get(_this.url, _.defaults(opts, {
+              responseType: 'arraybuffer'
+            })).then(function(res) {
+              return _this.decode(res.data).then(function() {
+                _this.connect();
+                return fulfill(_this);
+              });
+            })["catch"](reject);
+          } else {
+            return fulfill(_this);
+          }
         };
       })(this));
     };
 
-    Player.prototype.decode = function(res) {
+    Player.prototype.decode = function(data) {
       return new Promise((function(_this) {
         return function(fulfill, reject) {
-          return _this.context.decodeAudioData(res.data, function(buffer) {
+          return _this.context.decodeAudioData(data, function(buffer) {
             _this.buffer = buffer;
             return fulfill(_this);
           });
@@ -181,7 +218,10 @@ angular.module('util.audio', ['util.audio.template']).config(function($sceDelega
       return this;
     };
 
-    Player.prototype.seek = function() {
+    Player.prototype.seek = function(pos) {
+      if (pos == null) {
+        pos = this.offset;
+      }
       if (typeof this.offset === 'string') {
         this.offset = parseFloat(this.offset);
       }
@@ -238,7 +278,13 @@ angular.module('util.audio', ['util.audio.template']).config(function($sceDelega
     controller: function($scope, audioService) {
       var player;
       player = new audioService.Player($scope.src);
-      player.fetch()["catch"]($log.error);
+      $scope.$watch('src', function(newurl, oldurl) {
+        if (newurl !== oldurl) {
+          return player.fetch({
+            url: newurl
+          })["catch"]($log.error);
+        }
+      });
       return _.extend($scope, {
         model: player,
         duration: function() {
