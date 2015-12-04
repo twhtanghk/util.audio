@@ -39,6 +39,8 @@ Open browser to visit http://mob.myvnc.com/util.audio/. Press record button for 
 
 Deploy to local testing server
 ```
+  git clone https://github.com/twhtanghk/util.audio.git
+  cd util.audio
   npm install && bower install
   node_modules/.bin/gulp
   node_modules/.bin/http-server ./test -p 8080
