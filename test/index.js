@@ -48,7 +48,7 @@ now = function() {
 angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($sceDelegateProvider, $compileProvider) {
   return $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://mob.myvnc.com/**', 'filesystem:**', 'blob:**']);
 }).factory('audioService', function($http, $interval, $log) {
-  var Player, Recorder, Wad, beep;
+  var Audio, Player, Recorder, Wad, beep;
   Wad = require("./test/lib/Wad/build/wad.js");
   beep = function(ms, cb) {
     var callback, sine;
@@ -127,30 +127,92 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
 
   })();
   Player = (function() {
-    Player.defaultVol = 1.0;
+    var _instance;
+
+    function Player() {}
+
+    Player.AudioContext = window.AudioContext || webkitAudioContext;
+
+    Player.context = new Player.AudioContext();
 
     Player.interval = .33;
 
-    Player.formatTime = function(sec) {
+    _instance = null;
+
+    Player.instance = function() {
+      return _instance != null ? _instance : _instance = new Player();
+    };
+
+    Player.prototype.connect = function(audio) {
+      var ref;
+      if ((ref = this.audio) != null ? ref.playing : void 0) {
+        this.pause();
+      }
+      this.audio = audio;
+      this.source = Player.context.createBufferSource();
+      this.source.buffer = audio.buffer;
+      this.source.connect(audio.gain);
+      audio.gain.connect(Player.context.destination);
+      return this;
+    };
+
+    Player.prototype.play = function(audio) {
+      var id, progress;
+      this.connect(audio);
+      audio.playing = true;
+      progress = (function(_this) {
+        return function() {
+          return audio.offset += Player.interval;
+        };
+      })(this);
+      id = $interval(progress, Player.interval * 1000);
+      this.source.onended = (function(_this) {
+        return function() {
+          $interval.cancel(id);
+          if (audio.duration() - audio.offset < Player.interval) {
+            audio.offset = 0;
+            return audio.playing = false;
+          }
+        };
+      })(this);
+      this.source.start(0, audio.offset);
+      return this;
+    };
+
+    Player.prototype.pause = function() {
+      var ref;
+      if ((ref = this.source) != null) {
+        ref.stop();
+      }
+      this.audio.playing = false;
+      return this;
+    };
+
+    return Player;
+
+  })();
+  Audio = (function() {
+    Audio.defaultVol = 1;
+
+    Audio.prototype.url = '';
+
+    Audio.prototype.playing = false;
+
+    Audio.prototype.offset = 0;
+
+    Audio.formatTime = function(sec) {
       return numeral(sec).format('00:00:00');
     };
 
-    Player.prototype.playing = false;
-
-    Player.prototype.offset = 0;
-
-    function Player(url1) {
-      var AudioContext;
+    function Audio(url1) {
       this.url = url1;
       this.toggleVol = bind(this.toggleVol, this);
-      AudioContext = window.AudioContext || webkitAudioContext;
-      this.context = new AudioContext();
-      this.gain = this.context.createGain();
+      this.gain = Player.context.createGain();
       this.volume = this.gain.gain;
       this.fetch()["catch"]($log.error);
     }
 
-    Player.prototype.fetch = function(opts) {
+    Audio.prototype.fetch = function(opts) {
       if (opts == null) {
         opts = {};
       }
@@ -162,7 +224,6 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
               responseType: 'arraybuffer'
             })).then(function(res) {
               return _this.decode(res.data).then(function() {
-                _this.connect();
                 return fulfill(_this);
               });
             })["catch"](reject);
@@ -173,10 +234,10 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
       })(this));
     };
 
-    Player.prototype.decode = function(data) {
+    Audio.prototype.decode = function(data) {
       return new Promise((function(_this) {
         return function(fulfill, reject) {
-          return _this.context.decodeAudioData(data, function(buffer) {
+          return Player.context.decodeAudioData(data, function(buffer) {
             _this.buffer = buffer;
             return fulfill(_this);
           });
@@ -184,18 +245,7 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
       })(this));
     };
 
-    Player.prototype.connect = function() {
-      if (this.playing) {
-        this.pause();
-      }
-      this.source = this.context.createBufferSource();
-      this.source.buffer = this.buffer;
-      this.source.connect(this.gain);
-      this.gain.connect(this.context.destination);
-      return this;
-    };
-
-    Player.prototype.duration = function() {
+    Audio.prototype.duration = function() {
       if (this.buffer) {
         return this.buffer.duration;
       } else {
@@ -203,55 +253,15 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
       }
     };
 
-    Player.prototype.play = function(offset) {
-      var id, progress;
-      if (offset == null) {
-        offset = this.offset;
-      }
-      this.connect();
-      this.playing = true;
-      progress = (function(_this) {
-        return function() {
-          return _this.offset += Player.interval;
-        };
-      })(this);
-      id = $interval(progress, Player.interval * 1000);
-      this.source.onended = (function(_this) {
-        return function() {
-          $interval.cancel(id);
-          if (_this.duration() - _this.offset < Player.interval) {
-            _this.offset = 0;
-            return _this.playing = false;
-          }
-        };
-      })(this);
-      this.source.start(0, offset);
-      return this;
+    Audio.prototype.play = function() {
+      return Player.instance().play(this);
     };
 
-    Player.prototype.pause = function() {
-      var ref;
-      if ((ref = this.source) != null) {
-        ref.stop();
-      }
-      this.playing = false;
-      return this;
+    Audio.prototype.pause = function() {
+      return Player.instance().pause();
     };
 
-    Player.prototype.seek = function(pos) {
-      if (pos == null) {
-        pos = this.offset;
-      }
-      if (typeof this.offset === 'string') {
-        this.offset = parseFloat(this.offset);
-      }
-      if (this.playing) {
-        this.play();
-      }
-      return this;
-    };
-
-    Player.prototype.toggle = function() {
+    Audio.prototype.toggle = function() {
       if (this.playing) {
         this.pause();
       } else {
@@ -260,18 +270,32 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
       return this;
     };
 
-    Player.prototype.mute = function() {
-      Player.defaultVol = this.volume.value;
+    Audio.prototype.seek = function(pos) {
+      if (pos == null) {
+        pos = this.offset;
+      }
+      this.offset = pos;
+      if (typeof this.offset === 'string') {
+        this.offset = parseFloat(this.offset);
+      }
+      if (this.playing) {
+        Player.instance().play(this);
+      }
+      return this;
+    };
+
+    Audio.prototype.mute = function() {
+      this.defaultVol = this.volume.value;
       this.volume.value = 0;
       return this;
     };
 
-    Player.prototype.unmute = function() {
-      this.volume.value = Player.defaultVol;
+    Audio.prototype.unmute = function() {
+      this.volume.value = this.defaultVol;
       return this;
     };
 
-    Player.prototype.toggleVol = function() {
+    Audio.prototype.toggleVol = function() {
       if (this.volume.value === 0) {
         return this.unmute();
       } else {
@@ -279,10 +303,11 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
       }
     };
 
-    return Player;
+    return Audio;
 
   })();
   return {
+    Audio: Audio,
     Recorder: Recorder,
     Player: Player
   };
@@ -296,26 +321,26 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
       return attr.templateUrl || "audio.html";
     },
     controller: function($scope, audioService) {
-      var player;
-      player = new audioService.Player($scope.src);
+      var audio;
+      audio = new audioService.Audio($scope.src);
       $scope.$watch('src', function(newurl, oldurl) {
         if (newurl !== oldurl) {
-          return player.fetch({
+          return audio.fetch({
             url: newurl
           })["catch"]($log.error);
         }
       });
       return _.extend($scope, {
-        model: player,
+        model: audio,
         duration: function() {
-          return audioService.Player.formatTime(player.duration());
+          return audioService.Audio.formatTime(audio.duration());
         },
         offset: function() {
-          return audioService.Player.formatTime(player.offset);
+          return audioService.Audio.formatTime(audio.offset);
         },
         volume: function() {
           var value;
-          value = player.volume.value;
+          value = audio.volume.value;
           switch (true) {
             case .66 < value && value <= 1:
               return 'ion-volume-high';

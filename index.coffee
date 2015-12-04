@@ -72,21 +72,63 @@ angular.module('util.audio', ['util.audio.template', 'ionic'])
 		
 		class Player
 			
-			@defaultVol: 1.0
-			
+			@AudioContext: window.AudioContext || webkitAudioContext
+				
+			@context: new Player.AudioContext()
+		
 			@interval: .33
-
-			@formatTime: (sec) ->
-				numeral(sec).format('00:00:00')
 			
+			_instance = null
+			
+			@instance: ->
+				_instance ?= new Player()
+			
+			connect: (audio) ->
+				if @audio?.playing
+					@pause()
+				@audio = audio
+				@source = Player.context.createBufferSource()
+				@source.buffer = audio.buffer
+				@source.connect audio.gain
+				audio.gain.connect Player.context.destination
+				return @
+			
+			play: (audio) ->
+				@connect(audio)
+				audio.playing = true
+				
+				progress = =>
+					audio.offset += Player.interval
+				id = $interval progress, Player.interval * 1000
+				@source.onended = =>
+					$interval.cancel id
+					if audio.duration() - audio.offset < Player.interval
+						audio.offset = 0
+						audio.playing = false
+					
+				@source.start 0, audio.offset
+				return @
+									 
+			pause: ->
+				@source?.stop()
+				@audio.playing = false
+				return @
+				
+		class Audio
+		
+			@defaultVol:	1
+			
+			url:	''
+		
 			playing:	false
 			
 			offset:		0
 			
+			@formatTime: (sec) ->
+				numeral(sec).format('00:00:00')
+			
 			constructor: (@url) ->
-				AudioContext = window.AudioContext || webkitAudioContext
-				@context = new AudioContext()
-				@gain = @context.createGain()
+				@gain = Player.context.createGain()
 				@volume = @gain.gain
 				@fetch().catch $log.error
 				
@@ -97,7 +139,6 @@ angular.module('util.audio', ['util.audio.template', 'ionic'])
 						$http.get @url, _.defaults(opts, responseType: 'arraybuffer')
 							.then (res) =>
 								@decode(res.data).then =>
-									@connect()
 									fulfill @
 							.catch reject
 					else
@@ -105,50 +146,27 @@ angular.module('util.audio', ['util.audio.template', 'ionic'])
 						
 			decode: (data) ->
 				new Promise (fulfill, reject) =>
-					@context.decodeAudioData data, (buffer) =>
+					Player.context.decodeAudioData data, (buffer) =>
 						@buffer = buffer
 						fulfill @
-					
-			connect: ->
-				if @playing
-					@pause()
-				@source = @context.createBufferSource()
-				@source.buffer = @buffer
-				@source.connect @gain
-				@gain.connect @context.destination
-				return @
-			
+
 			duration: ->
 				if @buffer then @buffer.duration else 0
-				
-			play: (offset = @offset) ->
-				@connect()
-				@playing = true
-				
-				progress = =>
-					@offset += Player.interval
-				id = $interval progress, Player.interval * 1000
-				@source.onended = =>
-					$interval.cancel id
-					if @duration() - @offset < Player.interval
-						@offset = 0
-						@playing = false
-					
-				@source.start 0, offset
-				return @
-									 
-			pause: ->
-				@source?.stop()
-				@playing = false
-				return @
 			
+			play: ->
+				Player.instance().play @
+				
+			pause: ->
+				Player.instance().pause()
+					
 			seek: (pos = @offset) ->
+				@offset = pos
 				# input[type=range] value is defined as string type
 				# to be fixed by angular later
 				if typeof @offset == 'string'
 					@offset = parseFloat @offset
 				if @playing
-					@play()
+					Player.instance().play(@)
 				return @
 					
 			toggle: ->
@@ -159,12 +177,12 @@ angular.module('util.audio', ['util.audio.template', 'ionic'])
 				return @
 					
 			mute: ->
-				Player.defaultVol = @volume.value 
+				@defaultVol = @volume.value 
 				@volume.value = 0
 				return @
 								
 			unmute: ->
-				@volume.value = Player.defaultVol
+				@volume.value = @defaultVol
 				return @
 				
 			toggleVol: =>
@@ -172,7 +190,8 @@ angular.module('util.audio', ['util.audio.template', 'ionic'])
 					@unmute()
 				else
 					@mute()
-					
+	
+		Audio:		Audio
 		Recorder:	Recorder
 		Player:		Player
 		
@@ -187,21 +206,21 @@ angular.module('util.audio', ['util.audio.template', 'ionic'])
 			attr.templateUrl || "audio.html"
 		
 		controller: ($scope, audioService) ->
-			player = new audioService.Player($scope.src)
+			audio = new audioService.Audio($scope.src)
 			
 			$scope.$watch 'src', (newurl, oldurl) ->
 				if newurl != oldurl
-					player.fetch(url: newurl)
+					audio.fetch(url: newurl)
 						.catch $log.error
 				
 			_.extend $scope, 
-				model: player
+				model: audio
 				duration: ->
-					audioService.Player.formatTime player.duration()
+					audioService.Audio.formatTime audio.duration()
 				offset: ->
-					audioService.Player.formatTime player.offset
+					audioService.Audio.formatTime audio.offset
 				volume: ->
-					value = player.volume.value
+					value = audio.volume.value
 					switch true
 						when .66 < value and value <= 1
 							'ion-volume-high'
