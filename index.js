@@ -241,15 +241,6 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
       return Player.instance().pause();
     };
 
-    Audio.prototype.toggle = function() {
-      if (this.playing) {
-        this.pause();
-      } else {
-        this.play();
-      }
-      return this;
-    };
-
     Audio.prototype.seek = function(pos) {
       if (pos == null) {
         pos = this.offset;
@@ -260,6 +251,15 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
       }
       if (this.playing) {
         Player.instance().play(this);
+      }
+      return this;
+    };
+
+    Audio.prototype.toggle = function() {
+      if (this.playing) {
+        this.pause();
+      } else {
+        this.play();
       }
       return this;
     };
@@ -300,10 +300,10 @@ angular.module('util.audio', ['util.audio.template', 'ionic']).config(function($
     templateUrl: function(elem, attr) {
       return attr.templateUrl || "audio.html";
     },
-    controller: function($scope, audioService) {
+    controller: function($scope, $attrs, audioService) {
       var audio;
       audio = new audioService.Audio($scope.src);
-      $scope.$watch('src', function(newurl, oldurl) {
+      $attrs.$observe('src', function(newurl, oldurl) {
         if (newurl !== oldurl) {
           return audio.fetch({
             url: newurl

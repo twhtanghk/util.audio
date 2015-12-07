@@ -205,10 +205,10 @@ angular.module('util.audio', ['util.audio.template', 'ionic'])
 		templateUrl: (elem, attr) ->
 			attr.templateUrl || "audio.html"
 		
-		controller: ($scope, audioService) ->
+		controller: ($scope, $attrs, audioService) ->
 			audio = new audioService.Audio($scope.src)
 			
-			$scope.$watch 'src', (newurl, oldurl) ->
+			$attrs.$observe 'src', (newurl, oldurl) ->
 				if newurl != oldurl
 					audio.fetch(url: newurl)
 						.catch $log.error
