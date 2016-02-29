@@ -27,8 +27,7 @@ gulp.task 'coffee', ->
 	    .pipe(gulp.dest('./www/js/'))
 
 gulp.task 'test', ['coffee', 'sass'], ->
-	sh.exec "cordova platform add android"
-	sh.exec "cordova platform add browser"
+	platform = 'browser'
+	sh.exec "cordova platform add #{platform}"
 	sh.exec "ionic resources"
-	sh.exec "cordova build android"
-	sh.exec "cordova build browser"
+	sh.exec "cordova build #{platform}"

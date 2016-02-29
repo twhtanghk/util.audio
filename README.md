@@ -44,11 +44,11 @@ Open browser to visit http://mob.myvnc.com/util.audio/. Press record button for 
 Deploy to local testing server
 ```
   git clone https://github.com/twhtanghk/util.audio.git
-  cd util.audio/test
+  cd util.audio
+  npm install
+  cd test
   npm install && bower install
   node_modules/.bin/gulp
-  cordova platform add browser
-  cordova build browser
   node_modules/.bin/http-server
 ```
 open browser to visit http://localhost:8080/platforms/browser/www/
