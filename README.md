@@ -1,37 +1,41 @@
 # util.audio
-util.audio is an angular module implemented with angular service 'audioService' and directive 'util-audio' for browser with Web Audio API support 
+util.audio is an angular module implemented with angular service 'audioService.recorder' Web Audio  
 
 ## Usage
 Install the required packages
 ```
-bower install util.audio Wad angular angular-animate angular-sanitize angular-ui-router ionic lodash  numeral
+bower install util.audio Wad
 
-npm install dateformat
-```
-
-Create audio player by directive 
-```
-	<util-audio src='http://static.kevvv.in/sounds/callmemaybe.mp3'></util-audio>
+npm install dateformat lodash
 ```
 
-Create audioService.Recorder
+Audio recording by audioService.recorder
 ```
-	require 'util.audio'
-	
-	angular.module 'app', ['util.audio']
-		.controller 'AudioController', ($scope, audioService) ->
-			_.extend $scope,
-				recorder:	new audioService.Recorder()
-				recordCompleted: ->
-					$scope.$apply('recorder.url')
+require 'util.audio'
+
+angular.module 'starter', ['util.audio']
+	.controller 'AudioController', ($scope, audioService) ->
+		$scope.recorder = audioService.recorder
+		$scope.refresh = ->
+			$scope.$apply()
 ```
 
-html with record button and player
+html with record button and player below. Press once to start, release to stop recording, and play button to play the last recording. The recording saved in local File "recorder.url" in '.wav' format can then be uploaded to remote server for processing (e.g. mp3 conversion).
 ```
-	<div>
-		<button class="button icon ion-record" on-hold='recorder.start()' on-release='recorder.stop().then(recordCompleted)'></button>
-		<util-audio ng-src="{{recorder.url}}"></util-audio>
-	</div>
+<html ng-app='starter'>
+	<head>
+		<script src="lib/ionic/js/ionic.bundle.js"></script>
+		<script src="cordova.js"></script>
+		<script type="text/javascript" src="js/index.js"></script>
+		<link href="css/ionic.app.css" rel="stylesheet">
+	</head>
+	<body ng-controller='AudioController'>
+		<button class="button icon ion-record" on-hold='recorder.start()' on-release='recorder.stop().then(refresh)'></button>
+		<audio ng-src="{{recorder.url}}" controls="conrtols">
+			<i>Your browser does not support the audio element.</i>
+		</audio>
+	</body>
+</html>
 ```
 
 ## Demo
@@ -40,9 +44,11 @@ Open browser to visit http://mob.myvnc.com/util.audio/. Press record button for 
 Deploy to local testing server
 ```
   git clone https://github.com/twhtanghk/util.audio.git
-  cd util.audio
+  cd util.audio/test
   npm install && bower install
   node_modules/.bin/gulp
-  node_modules/.bin/http-server ./test -p 8080
+  cordova platform add browser
+  cordova build browser
+  node_modules/.bin/http-server
 ```
-open browser to visit http://localhost:8080/
+open browser to visit http://localhost:8080/platforms/browser/www/

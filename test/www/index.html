@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html ng-app='starter'>
+	<head>
+		<script src="lib/ionic/js/ionic.bundle.js"></script>
+		<script src="cordova.js"></script>
+		<script type="text/javascript" src="js/index.js"></script>
+		<link href="css/ionic.app.css" rel="stylesheet">
+	</head>
+	<body ng-controller='AudioController'>
+		<button class="button icon ion-record" on-hold='recorder.start()' on-release='recorder.stop().then(refresh)'></button>
+		<audio ng-src="{{recorder.url}}" controls="conrtols">
+			<i>Your browser does not support the audio element.</i>
+		</audio>
+	</body>
+</html>
