@@ -1,13 +1,12 @@
 gulp = require 'gulp'
 browserify = require 'browserify'
 source = require 'vinyl-source-stream'
-coffee = require 'gulp-coffee'
-gutil = require 'gulp-util'
 sass = require 'gulp-sass'
 rename = require 'gulp-rename'
 minifyCss = require 'gulp-minify-css'
+sh = require 'shelljs'
 
-gulp.task 'default', ['coffee']
+gulp.task 'default', ['test']
 
 gulp.task 'sass', (done) ->
   gulp.src('./scss/ionic.app.scss')
@@ -27,8 +26,9 @@ gulp.task 'coffee', ->
 	    .pipe(source('index.js'))
 	    .pipe(gulp.dest('./www/js/'))
 
-gulp.task 'browser', ['test'], ->
-	sh.exec "(cd test; cordova build browser)"
-  
-gulp.task 'android', ['test'], ->
-	sh.exec "(cd test; cordova build android)"
+gulp.task 'test', ['coffee', 'sass'], ->
+	sh.exec "cordova platform add android"
+	sh.exec "cordova platform add browser"
+	sh.exec "ionic resources"
+	sh.exec "cordova build android"
+	sh.exec "cordova build browser"
