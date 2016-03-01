@@ -62,7 +62,7 @@
             _this.media.output.connect(_this.media.destination);
             return new Promise(function(resolve, reject) {
               return _this.media.rec.exportWAV(function(blob) {
-                blob.name = name;
+                blob.name = "" + (now()) + ".wav";
                 blob.lastModifiedDate = new Date();
                 _this.file = blob;
                 if (_this.url) {
