@@ -41,7 +41,7 @@ for processing (e.g. mp3 conversion).
 ```
 
 ## Demo
-Open browser to visit http://mob.myvnc.com/util.audio/. Press record button for audio recording and release to stop. Then, press play button to play the last recording.
+Open browser to visit https://mob.myvnc.com/util.audio/. Press record button for audio recording and release to stop. Then, press play button to play the last recording.
 
 Deploy to local testing server
 ```
