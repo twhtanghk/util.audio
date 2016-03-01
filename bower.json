@@ -20,15 +20,5 @@
     "bower_components",
     "test",
     "tests"
-  ],
-  "devDependencies": {
-    "Wad": "wad#~2.3.0",
-    "angular": "~1.4.8",
-    "lodash": "~3.10.1",
-    "ionic": "~1.1.1",
-    "numeral": "~1.5.3",
-    "angular-animate": "~1.4.8",
-    "angular-sanitize": "~1.4.8",
-    "angular-ui-router": "~0.2.15"
-  }
+  ]
 }
