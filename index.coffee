@@ -51,7 +51,7 @@ angular.module('util.audio', [])
 						@media.output.connect(@media.destination)
 						new Promise (resolve, reject) =>
 							@media.rec.exportWAV (blob) =>
-								blob.name =	name
+								blob.name =	"#{now()}.wav"
 								blob.lastModifiedDate = new Date()
 								@file = blob
 								if @url
