@@ -9,7 +9,7 @@ bower install util.audio Wad
 npm install dateformat lodash
 ```
 
-Audio recording by audioService.recorder
+Audio recording via audioService.recorder where recorder.file and recorder.url are the recording content and local file url respectively
 ```
 require 'util.audio'
 
@@ -20,7 +20,9 @@ angular.module 'starter', ['util.audio']
 			$scope.$apply()
 ```
 
-html with record button and player below. Press once to start, release to stop recording, and play button to play the last recording. The recording saved in local File "recorder.url" in '.wav' format can then be uploaded to remote server for processing (e.g. mp3 conversion).
+html with record button and html5 audio player below. Press once to start, release to stop recording, and play button to play
+the last recording. The recording saved in local File "recorder.url" with '.wav' format can then be uploaded to remote server 
+for processing (e.g. mp3 conversion).
 ```
 <html ng-app='starter'>
 	<head>
@@ -51,4 +53,4 @@ Deploy to local testing server
   node_modules/.bin/gulp
   node_modules/.bin/http-server
 ```
-open browser to visit http://localhost:8080/platforms/browser/www/
+open browser with url http://localhost:8080/platforms/browser/www/

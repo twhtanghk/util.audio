@@ -1,4 +1,3 @@
-_ = require 'lodash'
 dateformat = require 'dateformat'
 
 now = ->
@@ -15,17 +14,16 @@ angular.module('util.audio', [])
 
 		Wad = require 'Wad/build/wad.js'
 			
-		beep = (ms, cb) ->
-			sine = new Wad source: 'sine'
-			sine.play()
-			callback = ->
-				sine.stop()
-				cb()
-			_.delay callback, ms 
-		
-		class Recorder
+		beep = (ms) ->
+			new Promise (resolve, reject) ->
+				sine = new Wad source: 'sine'
+				sine.play()
+				cb = ->
+					sine.stop()
+					resolve()
+				setTimeout cb, ms
 			
-			recording:	false
+		class Recorder
 			
 			constructor: ->
 				@media = new Wad.Poly 
@@ -35,32 +33,30 @@ angular.module('util.audio', [])
 					source: 		'mic'
 				@media
 					.add @mic
-				
+					
 			start: ->
-				beep 1000, =>
-					@recording = true
-					@media.rec.clear()
-					@media.output.disconnect(@media.destination)
-					@media.rec.record()
-					@mic.play()
+				beep 1000
+					.then =>
+						@media.rec.clear()
+						@media.output.disconnect(@media.destination)
+						@media.rec.record()
+						@mic.play()
+						Promise.resolve @
 				
 			stop: ->
-				new Promise (fulfill, reject) =>
-					beep 500, =>
+				beep 500
+					.then =>
 						@mic.stop()
 						@media.rec.stop()
 						@media.output.connect(@media.destination)
-						@recording = false
-						@file().then (file) =>
-							@url = URL.createObjectURL file
-							fulfill @
-
-			file: (name = "#{now()}.wav") ->
-				new Promise (fulfill, reject) =>
-					@media.rec.exportWAV (blob) ->
-						_.extend blob,
-							name:			 	name
-							lastModifiedDate: 	new Date()
-						fulfill blob
-		
+						new Promise (resolve, reject) =>
+							@media.rec.exportWAV (blob) =>
+								blob.name =	name
+								blob.lastModifiedDate = new Date()
+								@file = blob
+								if @url
+									URL.revokeObjectURL @url
+								@url = URL.createObjectURL @file
+								resolve @
+								
 		recorder:	new Recorder()
