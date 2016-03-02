@@ -13,22 +13,8 @@
   angular.module('util.audio', []).config(function($sceDelegateProvider) {
     return $sceDelegateProvider.resourceUrlWhitelist(['self', 'https://mob.myvnc.com/**', 'filesystem:**', 'blob:**']);
   }).factory('audioService', function() {
-    var Recorder, Wad, beep;
+    var Recorder, Wad;
     Wad = require('Wad/build/wad.js');
-    beep = function(ms) {
-      return new Promise(function(resolve, reject) {
-        var cb, sine;
-        sine = new Wad({
-          source: 'sine'
-        });
-        sine.play();
-        cb = function() {
-          sine.stop();
-          return resolve();
-        };
-        return setTimeout(cb, ms);
-      });
-    };
     Recorder = (function() {
       function Recorder() {
         this.media = new Wad.Poly({
@@ -43,34 +29,27 @@
       }
 
       Recorder.prototype.start = function() {
-        return beep(1000).then((function(_this) {
-          return function() {
-            _this.media.rec.clear();
-            _this.media.output.disconnect(_this.media.destination);
-            _this.media.rec.record();
-            _this.mic.play();
-            return Promise.resolve(_this);
-          };
-        })(this));
+        this.media.rec.clear();
+        this.media.output.disconnect(this.media.destination);
+        this.media.rec.record();
+        return this.mic.play();
       };
 
       Recorder.prototype.stop = function() {
-        return beep(500).then((function(_this) {
-          return function() {
-            _this.mic.stop();
-            _this.media.rec.stop();
-            _this.media.output.connect(_this.media.destination);
-            return new Promise(function(resolve, reject) {
-              return _this.media.rec.exportWAV(function(blob) {
-                blob.name = "" + (now()) + ".wav";
-                blob.lastModifiedDate = new Date();
-                _this.file = blob;
-                if (_this.url) {
-                  URL.revokeObjectURL(_this.url);
-                }
-                _this.url = URL.createObjectURL(_this.file);
-                return resolve(_this);
-              });
+        this.mic.stop();
+        this.media.rec.stop();
+        this.media.output.connect(this.media.destination);
+        return new Promise((function(_this) {
+          return function(resolve, reject) {
+            return _this.media.rec.exportWAV(function(blob) {
+              blob.name = "" + (now()) + ".wav";
+              blob.lastModifiedDate = new Date();
+              _this.file = blob;
+              if (_this.url) {
+                URL.revokeObjectURL(_this.url);
+              }
+              _this.url = URL.createObjectURL(_this.file);
+              return resolve(_this);
             });
           };
         })(this));
