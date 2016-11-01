@@ -3,7 +3,7 @@
   "version": "0.0.8",
   "description": "audio recorder for browser",
   "main": [
-    "index.js",
+    "index.js"
   ],
   "directories": {
     "test": "test"

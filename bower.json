@@ -3,7 +3,7 @@
   "description": "audio recorder for browser",
   "version": "0.0.8",
   "main": [
-    "index.js",
+    "index.js"
   ],
   "authors": [
     "Tommy Tang <twhtanghk@gmail.com>"
