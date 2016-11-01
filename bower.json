@@ -20,5 +20,10 @@
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "devDependencies": {},
+  "dependencies": {
+    "Wad": "wad#^2.5.0",
+    "numeral": "^1.5.3"
+  }
 }

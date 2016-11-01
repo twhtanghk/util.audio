@@ -10,7 +10,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node_modules/.bin/http-server test --ssl"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,19 @@
   },
   "homepage": "https://github.com/twhtanghk/util.audio#readme",
   "devDependencies": {
-    "dateformat": "^1.0.12"
+    "bower": "^1.7.9",
+    "browserify": "^13.1.1",
+    "coffee-script": "^1.11.1",
+    "coffeeify": "^2.0.1",
+    "dateformat": "^1.0.12",
+    "debowerify": "^1.5.0",
+    "gulp": "^3.9.1",
+    "gulp-clean-css": "^2.0.13",
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^2.3.2",
+    "gulp-streamify": "^1.0.2",
+    "gulp-uglify": "^2.0.0",
+    "http-server": "^0.9.0",
+    "vinyl-source-stream": "^1.1.0"
   }
 }
