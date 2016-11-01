@@ -71,8 +71,10 @@ angular.module('util.audio', []).config(function($sceDelegateProvider) {
         responseType: 'arraybuffer'
       }).then((function(_this) {
         return function(res) {
-          return _this.context.decodeAudioData(res.data, function(buffer) {
-            return Promise.resolve(buffer);
+          return new Promise(function(resolve, reject) {
+            return _this.context.decodeAudioData(res.data, function(buffer) {
+              return resolve(buffer);
+            });
           });
         };
       })(this)).then((function(_this) {

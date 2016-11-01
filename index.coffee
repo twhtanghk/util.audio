@@ -85,8 +85,9 @@ angular
         $http
           .get @url, responseType: 'arraybuffer'
           .then (res) =>
-            @context.decodeAudioData res.data, (buffer) =>
-              Promise.resolve buffer
+            new Promise (resolve, reject) =>
+              @context.decodeAudioData res.data, (buffer) =>
+                resolve buffer
           .then (buffer) =>
             @source = @context.createBufferSource()
             @source.buffer = buffer
