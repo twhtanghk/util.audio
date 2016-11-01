@@ -1,10 +1,9 @@
 {
   "name": "util.audio",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "audio recorder for browser",
   "main": [
     "index.js",
-    "index.css"
   ],
   "directories": {
     "test": "test"
