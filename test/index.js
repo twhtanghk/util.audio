@@ -82,7 +82,7 @@ angular.module('util.audio', []).config(function($sceDelegateProvider) {
         return function(buffer) {
           _this.source = _this.context.createBufferSource();
           _this.source.buffer = buffer;
-          return _this.source.connect(_this.context.createGain()).connect(_this.context.destination);
+          return _this.source.connect(_this.context.destination);
         };
       })(this));
     };

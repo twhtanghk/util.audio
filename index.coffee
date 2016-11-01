@@ -91,9 +91,7 @@ angular
           .then (buffer) =>
             @source = @context.createBufferSource()
             @source.buffer = buffer
-            @source
-              .connect @context.createGain()
-              .connect @context.destination
+            @source.connect @context.destination
 
       start: ->
         @connect @url
