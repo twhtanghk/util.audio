@@ -1,7 +1,7 @@
 {
   "name": "util.audio",
-  "description": "audio recorder for browser",
-  "version": "0.0.8",
+  "description": "html audio player and recorder",
+  "version": "0.0.9",
   "main": [
     "index.js"
   ],
