@@ -3,6 +3,8 @@ EventEmitter = require('events').EventEmitter
 angular
 
   .module 'util.audio', []
+
+  .constant 'Modernizr', Modernizr
   
   .config ($sceDelegateProvider) ->
     
@@ -18,7 +20,8 @@ angular
         <button 
           class="button" 
           on-hold="model.start()"
-          on-release="model.stop()">
+          on-release="model.stop()"
+          ng-if="Modernizr.getusermedia">
           <i class="icon ion-mic-a"></i>
         </button>
       """
@@ -41,8 +44,9 @@ angular
     templateUrl: (elem, attr) ->
       attr.templateUrl || 'templates/util.audio/recorder.html'
 
-    controller: ($scope, audioService) ->
+    controller: ($scope, audioService, Modernizr) ->
       $scope.model = audioService.recorder
+      $scope.Modernizr = Modernizr
 
   .directive 'utilAudioPlayer', ->
 
@@ -55,7 +59,7 @@ angular
       attr.templateUrl || 'templates/util.audio/player.html'
 
     controller: ($scope, $attrs, audioService) ->
-      $scope.model = audioService.player
+      $scope.model = new audioService.Player()
       $scope.numeral = require 'numeral'
       $attrs.$observe 'src', (newurl, oldurl) ->
         if newurl != oldurl
@@ -65,7 +69,7 @@ angular
       $scope.stop = ->
         $scope.model.stop()
 
-  .factory 'audioService', ($http) ->
+  .factory 'audioService', ($http, $log) ->
 
     Wad = require 'Wad/build/wad.js'
     
@@ -107,10 +111,18 @@ angular
 
     class Recorder extends EventEmitter
       
+      _instance = null
+
+      @instance: ->
+        _instance ?= new Recorder()
+
       constructor: ->
         @media = new Wad.Poly 
           recConfig: 
             workerPath: 'lib/Wad/src/Recorderjs/recorderWorker.js'
+        if ! Modernizr?.getusermedia
+          $log.error 'getusermedia not supported'
+          return
         @mic = new Wad
           source:     'mic'
         @media
@@ -125,7 +137,7 @@ angular
         @
             
       stop: ->
-        @mic.stop()
+        @mic?.stop()
         @media.rec.stop()
         @media.output.connect(@media.destination)
         @media.rec.exportWAV (blob) =>
@@ -138,5 +150,5 @@ angular
           @emit 'stop'
         @
                 
-    recorder: new Recorder()        
-    player: Player.instance()
+    recorder: Recorder.instance()        
+    Player: Player
