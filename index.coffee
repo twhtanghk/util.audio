@@ -1,3 +1,4 @@
+numeral = require 'numeral'
 EventEmitter = require('events').EventEmitter
 
 angular
@@ -32,8 +33,7 @@ angular
           <i class="icon ion-play"></i>
         </button>
         <span style="vertical-align: middle">
-          {{numeral(model.source.buffer.duration).format('00:00')}}
-          {{model.source.buffer.paused}}
+          {{duration}}
         </span>
       """
 
@@ -58,16 +58,20 @@ angular
     templateUrl: (elem, attr) ->
       attr.templateUrl || 'templates/util.audio/player.html'
 
-    controller: ($scope, $attrs, audioService) ->
-      $scope.model = new audioService.Player()
-      $scope.numeral = require 'numeral'
+    controller: ($scope, $attrs, $log, audioService) ->
       $attrs.$observe 'src', (newurl, oldurl) ->
         if newurl != oldurl
-          $scope.model.connect newurl
+          audioService.player
+            .connect newurl
+            .then (source) ->
+              $scope.duration = numeral(source.buffer.duration).format '00:00'
+            .catch $log.error
       $scope.start = ->
-        $scope.model.start()
+        audioService.player
+          .start $attrs.src
+          .catch $log.error
       $scope.stop = ->
-        $scope.model.stop()
+        audioService.player.stop()
 
   .factory 'audioService', ($http, $log) ->
 
@@ -85,29 +89,27 @@ angular
       constructor: ->
         @context = new Player.AudioContext()
 
-      connect: (@url) ->
+      connect: (url) ->
         $http
-          .get @url, responseType: 'arraybuffer'
+          .get url, responseType: 'arraybuffer'
           .then (res) =>
             new Promise (resolve, reject) =>
-              @context.decodeAudioData res.data, (buffer) =>
-                resolve buffer
+              @context.decodeAudioData res.data, resolve, reject
           .then (buffer) =>
-            @source = @context.createBufferSource()
-            @source.buffer = buffer
-            @source.connect @context.destination
+            source = @context.createBufferSource()
+            source.buffer = buffer
+            source
 
-      start: ->
-        @connect @url
-          .then =>
-            @source?.start()
+      start: (url) ->
+        @connect url
+          .then (source) =>
+            source.connect @context.destination
+            source.start()
             @emit 'start'
-        @
 
       stop: ->
         @source?.stop()
         @emit 'stop'
-        @
 
     class Recorder extends EventEmitter
       
@@ -120,13 +122,11 @@ angular
         @media = new Wad.Poly 
           recConfig: 
             workerPath: 'lib/Wad/src/Recorderjs/recorderWorker.js'
-        if ! Modernizr?.getusermedia
-          $log.error 'getusermedia not supported'
-          return
-        @mic = new Wad
-          source:     'mic'
-        @media
-          .add @mic
+        if Modernizr?.getusermedia
+          @mic = new Wad
+            source:     'mic'
+          @media
+            .add @mic
           
       start: ->
         @media.rec.clear()
@@ -134,7 +134,6 @@ angular
         @media.rec.record()
         @mic.play()
         @emit 'start'
-        @
             
       stop: ->
         @mic?.stop()
@@ -148,7 +147,6 @@ angular
             URL.revokeObjectURL @url
           @url = URL.createObjectURL @file
           @emit 'stop'
-        @
                 
     recorder: Recorder.instance()        
-    Player: Player
+    player: Player.instance()
