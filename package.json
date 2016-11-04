@@ -1,6 +1,6 @@
 {
   "name": "util.audio",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "html audio player and recorder",
   "main": [
     "index.js"
