@@ -112,27 +112,32 @@ angular.module('util.audio', []).constant('Modernizr', Modernizr).config(functio
 
     extend(Recorder, superClass);
 
+    function Recorder() {
+      return Recorder.__super__.constructor.apply(this, arguments);
+    }
+
     _instance = null;
 
     Recorder.instance = function() {
       return _instance != null ? _instance : _instance = new Recorder();
     };
 
-    function Recorder() {
-      this.media = new Wad.Poly({
-        recConfig: {
-          workerPath: 'lib/Wad/src/Recorderjs/recorderWorker.js'
-        }
-      });
-      if (typeof Modernizr !== "undefined" && Modernizr !== null ? Modernizr.getusermedia : void 0) {
-        this.mic = new Wad({
-          source: 'mic'
+    Recorder.prototype.start = function() {
+      if (this.media == null) {
+        this.media = new Wad.Poly({
+          recConfig: {
+            workerPath: 'lib/Wad/src/Recorderjs/recorderWorker.js'
+          }
         });
+      }
+      if (typeof Modernizr !== "undefined" && Modernizr !== null ? Modernizr.getusermedia : void 0) {
+        if (this.mic == null) {
+          this.mic = new Wad({
+            source: 'mic'
+          });
+        }
         this.media.add(this.mic);
       }
-    }
-
-    Recorder.prototype.start = function() {
       this.media.rec.clear();
       this.media.output.disconnect(this.media.destination);
       this.media.rec.record();

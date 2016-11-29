@@ -118,17 +118,16 @@ angular
       @instance: ->
         _instance ?= new Recorder()
 
-      constructor: ->
-        @media = new Wad.Poly 
+      start: ->
+        @media ?= new Wad.Poly 
           recConfig: 
             workerPath: 'lib/Wad/src/Recorderjs/recorderWorker.js'
         if Modernizr?.getusermedia
-          @mic = new Wad
+          @mic ?= new Wad
             source:     'mic'
           @media
             .add @mic
           
-      start: ->
         @media.rec.clear()
         @media.output.disconnect(@media.destination)
         @media.rec.record()
